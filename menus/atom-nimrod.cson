@@ -1,0 +1,8 @@
+# See https://atom.io/docs/latest/creating-a-package#menus for more details
+# 'context-menu':
+# 	'.tree-view .file': [
+# 		{label: 'Run nimrod', command: 'nimrod:executeOn'}
+# 	]
+# 	'.tree-view .directory': [
+# 		{label: 'Run batch nimrod', command: 'nimrod:executeBatchOn'}
+# 	]
