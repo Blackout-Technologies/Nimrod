@@ -1,36 +1,35 @@
 {
-    "name": "nimrod",
-    "main": "./lib/nimrod",
-    "version": "0.1.0",
-    "description": "Package for Atom. Assign parametrized shell commands to file globs to be automatically run whenever the file is saved",
-    "license": "ISC",
-    "engines": {
-      "atom": ">=0.174.0 <2.0.0"
-    },
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/Blackout-Technologies/Nimrod"
-    },
-    "keywords": [
-      "monitor",
-      "watch",
-      "watcher",
-      "file",
-      "folder",
-      "directory",
-      "rsync",
-      "sync",
-      "save",
-      "edited",
-      "modified"
-    ],
-    "author": {
-      "name": "Marc Fiedler"
-    },
-    "bugs": {
-      "url": "https://github.com/Blackout-Technologies/Nimrod/issues"
-    },
-    "homepage": "https://blackout.ai/",
-  "dependencies": {
-  }
+  "name": "nimrod",
+  "main": "./lib/nimrod",
+  "version": "0.1.1",
+  "description": "Package for Atom. Assign parametrized shell commands to file globs to be automatically run whenever the file is saved",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=0.174.0 <2.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Blackout-Technologies/Nimrod"
+  },
+  "keywords": [
+    "monitor",
+    "watch",
+    "watcher",
+    "file",
+    "folder",
+    "directory",
+    "rsync",
+    "sync",
+    "save",
+    "edited",
+    "modified"
+  ],
+  "author": {
+    "name": "Marc Fiedler"
+  },
+  "bugs": {
+    "url": "https://github.com/Blackout-Technologies/Nimrod/issues"
+  },
+  "homepage": "https://blackout.ai/",
+  "dependencies": {}
 }
