@@ -1,6 +1,0 @@
-{
-	"timeout": 2000,
-	"commands": [
-		"lib/**/*.coffee : echo x"
-	]
-}
