@@ -4,8 +4,7 @@
         "version": "0.1.4",
         "release": "",
         "resourceName": "nimrod",
-        "type": "App",
-        "target": "development/Apps/Nimrod2"
+        "type": "App"
     },
     "system": {
         "version": "0.1.4"
