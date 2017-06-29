@@ -57,7 +57,7 @@ module.exports = Nimrod =
         @config = {}
         syncProfile = atom.config.get('nimrod.syncProfile')
         syncServer = atom.config.get('nimrod.syncServer')
-        console.log 'Nimrod Profile: '+syncProfile+'@'+syncServer
+        # console.log 'Nimrod Profile: '+syncProfile+'@'+syncServer
 
         @config.profile = syncProfile+'@'+syncServer
         if syncProfile is ''
@@ -92,19 +92,25 @@ module.exports = Nimrod =
                 @config = parsed
             @config.cwd = dir.getPath()
 
-            console.dir parsed
+            if parsed.resource.target != undefined and parsed.resource.target != ''
+                suppress = atom.config.get('nimrod.showNotifications')
+                if suppress is true
+                    atom.notifications.addInfo('Synchronizing data')
 
-            command = 'rsync -r -l '+dir.getPath()+'/ '+syncProfile+'@'+syncServer+':./'+parsed.resource.target+'/'
-            @executeCommand(command)
+                sync = spawn 'rsync', ['-r', '-l',
+                    dir.getPath()+'/',
+                    syncProfile+'@'+syncServer+':./'+parsed.resource.target+'/']
 
-    executeCommand: (command) ->
-        console.log "COMMAND #{command}"
-        cmdarr = command.split(' ')
-        command = cmdarr[0]
-        args = cmdarr
-        cspr = spawn command, args ,
-        cwd: @config.cwd
+                sync.stderr.on 'data', (data) ->
+                    atom.notifications.addError(data.toString().trim())
 
-        suppress = atom.config.get('nimrod.showNotifications')
-        if suppress is true
-            atom.notifications.addSuccess('Files successfully synchronised!')
+                sync.on 'close', (code) ->
+                    if code == 0
+                        if suppress is true
+                            atom.notifications.addSuccess('Files successfully synchronised!')
+                        else
+                            console.log "No command executed."
+                    else
+                        atom.notifications.addError('Unable to synch data!')
+
+                cwd: @config.cwd

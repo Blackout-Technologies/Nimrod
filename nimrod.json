@@ -1,13 +1,13 @@
 {
     "resource": {
         "name": "Nimrod",
-        "version": "0.1.0",
+        "version": "0.1.4",
         "release": "",
         "resourceName": "nimrod",
         "type": "App",
         "target": "development/Apps/Nimrod2"
     },
     "system": {
-        "version": "0.1.0"
+        "version": "0.1.4"
     }
 }
