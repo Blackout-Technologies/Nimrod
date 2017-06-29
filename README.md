@@ -1,5 +1,5 @@
 # Nimrod
-Leightweight Rync for project folders.
+Leightweight rync for project folders. Executes on save.
 
 > Nimrod, a biblical figure described as a king of Shinar, was, according to the Book of Genesis and Books of Chronicles, the son of Cush, the great-grandson of Noah. The Bible states that he was "a mighty hunter before the Lord [and] .... began to be mighty in the earth". Extra-biblical traditions associating him with the Tower of Babel led to his reputation as a king who was rebellious against God.
 
@@ -18,6 +18,12 @@ Nimrod uses `rsync` to sync your dev folders with your production/dev server.
 # Usage
 Setup the `nimrod.json` file in the root of your project folder, add the profile information
 in the settings screen and your code will be synched to your server.
+
+Just add your username and server and nimrod will sync the files to your remote location.
+
+![settings](https://raw.githubusercontent.com/Blackout-Technologies/Nimrod/master/img/settings.png)
+
+> NOTE: Nimrod will ignore .git files on sync
 
 ## Configuration
 A config file named `nimrod.json` must be present in the project folder. In order
@@ -41,5 +47,7 @@ to have rsync work you at least need the `target` and `resourceName` fields fill
 
 # Dependencies
 This package requires your machine to have access to `rsync`.
-
 > it has only been tested on macOS Sierra ~>10.12
+
+# Roadmap
+* Include websocket based CI for remote building via keyboard shortcut

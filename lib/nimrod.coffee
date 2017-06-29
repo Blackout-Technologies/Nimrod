@@ -61,11 +61,11 @@ module.exports = Nimrod =
 
         @config.profile = syncProfile+'@'+syncServer
         if syncProfile is ''
-            atom.notifications.addError('You have Nimrod installed but did not set a Sync Profile! Go to settings -> Nimrod in order to set up a profile for synch')
+            atom.notifications.addError('You have Nimrod installed but did not set a Profile! Go to settings -> Nimrod in order to set up a profile for synch')
             return
 
         if syncServer is ''
-            atom.notifications.addError('You have Nimrod installed but did not set a Sync Server! Go to settings -> Nimrod in order to set up a profile for synch')
+            atom.notifications.addError('You have Nimrod installed but did not set a Server! Go to settings -> Nimrod in order to set up a profile for synch')
             return
 
         dir = new File(currentPath).getParent()
@@ -95,9 +95,9 @@ module.exports = Nimrod =
             if parsed.resource.target != undefined and parsed.resource.target != ''
                 suppress = atom.config.get('nimrod.showNotifications')
                 if suppress is true
-                    atom.notifications.addInfo('Synchronizing data')
+                    atom.notifications.addInfo('Synching data...')
 
-                sync = spawn 'rsync', ['-r', '-l',
+                sync = spawn 'rsync', ['-r', '-l', '--exclude', '.git',
                     dir.getPath()+'/',
                     syncProfile+'@'+syncServer+':./'+parsed.resource.target+'/']
 
@@ -107,10 +107,10 @@ module.exports = Nimrod =
                 sync.on 'close', (code) ->
                     if code == 0
                         if suppress is true
-                            atom.notifications.addSuccess('Files successfully synchronised!')
+                            atom.notifications.addSuccess('Project successfully synched')
                         else
                             console.log "No command executed."
                     else
-                        atom.notifications.addError('Unable to synch data!')
+                        atom.notifications.addError('Unable to synch project!')
 
                 cwd: @config.cwd
