@@ -1,22 +1,22 @@
 # See https://atom.io/docs/latest/hacking-atom-package-word-count#menus for more details
-#'context-menu':
-#  'atom-text-editor': [
-#    {
-#      'label': 'Toggle nimrod'
-#      'command': 'nimrod:toggle'
-#    }
-# ]
-#'menu': [
-#  {
-#    'label': 'Packages'
-#    'submenu': [
-#      'label': 'nimrod'
-#      'submenu': [
-#        {
-#          'label': 'Toggle'
-#          'command': 'nimrod:toggle'
-#        }
-#      ]
-#    ]
-#  }
-#]
+'context-menu':
+  'atom-text-editor': [
+    {
+      'label': 'Build project'
+      'command': 'nimrod:toggle'
+    }
+ ]
+'menu': [
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'Nimrod'
+      'submenu': [
+        {
+          'label': 'Build project'
+          'command': 'nimrod:toggle'
+        }
+      ]
+    ]
+  }
+]

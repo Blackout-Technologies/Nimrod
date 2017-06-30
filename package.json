@@ -31,5 +31,7 @@
     "url": "https://github.com/Blackout-Technologies/Nimrod/issues"
   },
   "homepage": "https://blackout.ai/",
-  "dependencies": {}
+  "dependencies": {
+      "ws": "*"
+  }
 }

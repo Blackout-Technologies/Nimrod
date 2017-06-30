@@ -1,5 +1,5 @@
 # Nimrod
-Leightweight rync for project folders. Executes on save.
+Leightweight rync for project folders. Sync on save. Integrated with WebSocket controlled CI
 
 > Nimrod, a biblical figure described as a king of Shinar, was, according to the Book of Genesis and Books of Chronicles, the son of Cush, the great-grandson of Noah. The Bible states that he was "a mighty hunter before the Lord [and] .... began to be mighty in the earth". Extra-biblical traditions associating him with the Tower of Babel led to his reputation as a king who was rebellious against God.
 
@@ -12,7 +12,7 @@ Nimrod uses `rsync` to sync your dev folders with your production/dev server.
 |Language|CoffeeScript|
 |Authors|Marc Fiedler - @mf|
 |Copyright|(c)2017 Blackout Technologies [http://blackout.ai]|
-|Current Package Version| 0.3.0|
+|Current Package Version| 0.4.0|
 |Current System Version| 0.1.4|
 
 # Usage

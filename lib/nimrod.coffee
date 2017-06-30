@@ -1,6 +1,7 @@
 child_process = require 'child_process'
 path = require 'path'
 fs = require 'fs'
+ws = require 'ws'
 {spawn, exec} = require 'child_process'
 
 NimrodView = require './nimrod-view'
@@ -10,6 +11,7 @@ module.exports = Nimrod =
     nimrodView: null
     modalPanel: null
     subscriptions: null
+    socket: null
 
     config:
     	syncProfile:
@@ -52,6 +54,32 @@ module.exports = Nimrod =
 
     serialize: ->
         nimrodViewState: @nimrodView.serialize()
+
+    toggle: ->
+        if @socket == null
+            # probably also check of the connection is still up?
+            host = atom.config.get('nimrod.syncServer')
+            @socket = new ws("ws://#{host}:8100")
+
+        msg =
+            'api':
+                'version': '4.2.0'
+                'intent': 'build'
+            'path': 'development/Apps/Ophion'
+
+        @socket.on 'open', ->
+            atom.notifications.addInfo("Connected to build Server")
+            Nimrod.socket.send JSON.stringify msg
+
+        @socket.on 'message', (data) ->
+            console.log "Got message #{data}"
+            msg = JSON.parse data
+            if msg.state == 'OK'
+                atom.notifications.addSuccess("Build complete")
+
+        @socket.on 'close', ->
+            atom.notifications.addWarning("Disconnected from build Server")
+            @socket = null
 
     executeOn: (currentPath)->
         @config = {}
