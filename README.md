@@ -49,5 +49,8 @@ to have rsync work you at least need the `target` and `resourceName` fields fill
 This package requires your machine to have access to `rsync`.
 > it has only been tested on macOS Sierra ~>10.12
 
+## Additional Dependendies:
+* ws ~> '3.0'
+
 # Roadmap
 * Include websocket based CI for remote building via keyboard shortcut
