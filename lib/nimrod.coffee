@@ -29,6 +29,11 @@ module.exports = Nimrod =
     		default: 'true'
     		title: 'Display notifications'
 
+    	robotIp:
+    		type: 'string'
+    		default: ''
+    		title: 'Robot name or IP address'
+
     activate: (state) ->
         @nimrodView = new NimrodView(state.nimrodViewState)
         @modalPanel = atom.workspace.addModalPanel(item: @nimrodView.getElement(), visible: false)
@@ -65,7 +70,7 @@ module.exports = Nimrod =
             'api':
                 'version': '4.2.0'
                 'intent': 'build'
-            'path': 'development/Apps/Ophion'
+            'path': ''
 
         @socket.on 'open', ->
             atom.notifications.addInfo("Connected to build Server")
@@ -81,20 +86,70 @@ module.exports = Nimrod =
             atom.notifications.addWarning("Disconnected from build Server")
             @socket = null
 
+
+    syncToServer: (data, dir)->
+        # Sync data to remote server
+        notifications = atom.config.get('nimrod.showNotifications')
+        syncProfile = atom.config.get('nimrod.syncProfile')
+        syncServer = atom.config.get('nimrod.syncServer')
+        target = data.resource.target
+        syncToCloud = data.resource.syncToCloud
+        if syncToCloud == undefined
+            syncToCloud = true
+
+        if target != undefined and target != ''
+            if syncServer != '' and syncToCloud
+                # spawn rsync process
+                sync = spawn 'rsync', ['-r', '--exclude', '.git', dir.getPath()+'/',
+                    syncProfile+'@'+syncServer+':./'+target+'/']
+
+                sync.stderr.on 'data', (data) ->
+                    atom.notifications.addError(data.toString().trim())
+
+                sync.on 'close', (code) ->
+                    if code == 0
+                        if notifications is true
+                            atom.notifications.addSuccess('Project successfully synched')
+                        else
+                            console.log "No command executed."
+                    else
+                        atom.notifications.addError('Unable to synch project!')
+
+    syncToRobot: (data, dir) ->
+        # Sync data to robot in your network
+        notifications = atom.config.get('nimrod.showNotifications')
+
+        if data.resource.syncToRobot != undefined and data.resource.syncToRobot
+            robotIpAddr = atom.config.get('nimrod.robotIp')
+            if robotIpAddr != ''
+                console.log 'nao@'+robotIpAddr+':./'+data.resource.target+'/'
+                roboSync = spawn 'rsync', ['-r', '--exclude', '.git', dir.getPath()+'/',
+                    'nao@'+robotIpAddr+':./'+data.resource.target+'/']
+
+                roboSync.stderr.on 'data', (data) ->
+                    atom.notifications.addError(data.toString().trim())
+
+                roboSync.on 'close', (code) ->
+                    if code == 0
+                        if notifications is true
+                            atom.notifications.addSuccess('Robot code synched')
+                        else
+                            console.log "No command executed."
+                    else
+                        atom.notifications.addError('Unable to synch robot code!')
+
     executeOn: (currentPath)->
         @config = {}
         syncProfile = atom.config.get('nimrod.syncProfile')
         syncServer = atom.config.get('nimrod.syncServer')
-        # console.log 'Nimrod Profile: '+syncProfile+'@'+syncServer
+        robotIpAddr = atom.config.get('nimrod.syncServer')
+        notifications = atom.config.get('nimrod.showNotifications')
+
+        if syncProfile == '' and syncServer == '' and robotIpAddr == ''
+            atom.notifications.addWarning("No profiles for Nimrod setup yet. Visit the settings to set up your profile.")
+            return
 
         @config.profile = syncProfile+'@'+syncServer
-        if syncProfile is ''
-            atom.notifications.addError('You have Nimrod installed but did not set a Profile! Go to settings -> Nimrod in order to set up a profile for synch')
-            return
-
-        if syncServer is ''
-            atom.notifications.addError('You have Nimrod installed but did not set a Server! Go to settings -> Nimrod in order to set up a profile for synch')
-            return
 
         dir = new File(currentPath).getParent()
         file = undefined
@@ -120,25 +175,11 @@ module.exports = Nimrod =
                 @config = parsed
             @config.cwd = dir.getPath()
 
-            if parsed.resource.target != undefined and parsed.resource.target != ''
-                suppress = atom.config.get('nimrod.showNotifications')
-                if suppress is true
-                    atom.notifications.addInfo('Synching data...')
+            if notifications is true
+                atom.notifications.addInfo('Synching data...')
+            # try syncing data to the remote Server
+            @syncToServer(parsed, dir)
+            # try to sync data to the robot
+            @syncToRobot(parsed, dir)
 
-                sync = spawn 'rsync', ['-r', '-l', '--exclude', '.git',
-                    dir.getPath()+'/',
-                    syncProfile+'@'+syncServer+':./'+parsed.resource.target+'/']
-
-                sync.stderr.on 'data', (data) ->
-                    atom.notifications.addError(data.toString().trim())
-
-                sync.on 'close', (code) ->
-                    if code == 0
-                        if suppress is true
-                            atom.notifications.addSuccess('Project successfully synched')
-                        else
-                            console.log "No command executed."
-                    else
-                        atom.notifications.addError('Unable to synch project!')
-
-                cwd: @config.cwd
+            cwd: @config.cwd
