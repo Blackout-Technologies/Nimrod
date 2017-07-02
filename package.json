@@ -1,7 +1,7 @@
 {
   "name": "nimrod",
   "main": "./lib/nimrod",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Package for Atom. Assign parametrized shell commands to file globs to be automatically run whenever the file is saved",
   "license": "MIT",
   "engines": {
@@ -32,6 +32,6 @@
   },
   "homepage": "https://blackout.ai/",
   "dependencies": {
-      "ws": "*"
+    "ws": "*"
   }
 }
