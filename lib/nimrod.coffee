@@ -12,6 +12,7 @@ module.exports = Nimrod =
     modalPanel: null
     subscriptions: null
     socket: null
+    registered: null
 
     config:
     	syncProfile:
@@ -37,6 +38,7 @@ module.exports = Nimrod =
     activate: (state) ->
         @nimrodView = new NimrodView(state.nimrodViewState)
         @modalPanel = atom.workspace.addModalPanel(item: @nimrodView.getElement(), visible: false)
+        @registered = false
 
         # Events subscribed to in atom's system can be easily cleaned up with a CompositeDisposable
         @subscriptions = new CompositeDisposable
@@ -61,31 +63,56 @@ module.exports = Nimrod =
         nimrodViewState: @nimrodView.serialize()
 
     toggle: ->
-        if @socket == null
-            # probably also check of the connection is still up?
-            host = atom.config.get('nimrod.syncServer')
-            @socket = new ws("ws://#{host}:8100")
+        config = @config
+        if config != undefined and config != null
+            if config.resource.ci != undefined
+                port = config.resource.ci.port
+                target = config.resource.target
+                if @socket == null
+                    # probably also check of the connection is still up?
+                    host = atom.config.get('nimrod.syncServer')
+                    @socket = new ws("ws://#{host}:#{port}/nimrod")
 
+                    @socket.on 'open', ->
+                        atom.notifications.addInfo("Connected to build Server")
+                        msg =
+                            'api':
+                                'version': '4.2.0'
+                                'intent': 'register'
+                            'interface': 'af108bb4c6f8c73129c2ac485b2a19a5'
+                            'host': 'atom-package'
+                        @socket.send JSON.stringify msg
+
+                    @socket.on 'message', (data) ->
+                        console.log "Got message #{data}"
+                        msg = JSON.parse data
+                        if msg.state == 'OK'
+                            atom.notifications.addSuccess("Build complete")
+                        if msg.api.intent == 'registerSuccess'
+                            @registered = true
+                            @buildContent(target)
+
+                    @socket.on 'close', ->
+                        atom.notifications.addWarning("Disconnected from build Server")
+
+                    # set socket to null so that it can be reopened later
+                    @socket = null
+                else
+                    @buildContent(target)
+        else
+            atom.notifications.addInfo("Please press CMD + S before you build.")
+
+    buildContent: (target) ->
         msg =
             'api':
                 'version': '4.2.0'
                 'intent': 'build'
-            'path': ''
-
-        @socket.on 'open', ->
-            atom.notifications.addInfo("Connected to build Server")
+            'path': target
+        socket = @socket
+        if socket != undefined
             Nimrod.socket.send JSON.stringify msg
-
-        @socket.on 'message', (data) ->
-            console.log "Got message #{data}"
-            msg = JSON.parse data
-            if msg.state == 'OK'
-                atom.notifications.addSuccess("Build complete")
-
-        @socket.on 'close', ->
-            atom.notifications.addWarning("Disconnected from build Server")
-            @socket = null
-
+        else
+            atom.notifications.addWarning("Unable to send message")
 
     syncToServer: (data, dir)->
         # Sync data to remote server
@@ -119,10 +146,10 @@ module.exports = Nimrod =
         # Sync data to robot in your network
         notifications = atom.config.get('nimrod.showNotifications')
 
+        console.log 'nao@'+robotIpAddr+':./'+data.resource.target+'/'
         if data.resource.syncToRobot != undefined and data.resource.syncToRobot
             robotIpAddr = atom.config.get('nimrod.robotIp')
             if robotIpAddr != ''
-                console.log 'nao@'+robotIpAddr+':./'+data.resource.target+'/'
                 roboSync = spawn 'rsync', ['-r', '--exclude', '.git', dir.getPath()+'/',
                     'nao@'+robotIpAddr+':./'+data.resource.target+'/']
 
@@ -137,6 +164,10 @@ module.exports = Nimrod =
                             console.log "No command executed."
                     else
                         atom.notifications.addError('Unable to synch robot code!')
+            else
+                console.log("Remote Addr is empty, not syncing")
+        else
+            console.log("Resource is empty, not syncing")
 
     executeOn: (currentPath)->
         @config = {}
@@ -181,5 +212,3 @@ module.exports = Nimrod =
             @syncToServer(parsed, dir)
             # try to sync data to the robot
             @syncToRobot(parsed, dir)
-
-            cwd: @config.cwd
