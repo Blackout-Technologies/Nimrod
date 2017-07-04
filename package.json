@@ -2,7 +2,7 @@
   "name": "nimrod",
   "main": "./lib/nimrod",
   "version": "0.4.0",
-  "description": "Package for Atom. Assign parametrized shell commands to file globs to be automatically run whenever the file is saved",
+  "description": "Assign per project target folder that can be synchronised to a remote location.",
   "license": "MIT",
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
