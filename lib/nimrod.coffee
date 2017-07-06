@@ -12,6 +12,7 @@ module.exports = Nimrod =
     modalPanel: null
     subscriptions: null
     socket: null
+    panel: null
 
     config:
     	syncProfile:
@@ -51,12 +52,32 @@ module.exports = Nimrod =
                     console.log error
 
         # Register command that toggles this view
-        @subscriptions.add atom.commands.add 'atom-workspace', 'nimrod:toggle': => @toggle()
+        @subscriptions.add atom.commands.add 'atom-workspace',
+            'nimrod:toggle': =>
+                @toggle()
+
+        @panel = atom.workspace.addBottomPanel(
+            item: document.createElement('div'),
+            priority: 300
+        )
+
+        @resultDiv = document.createElement('div')
+        @resultDiv.classList.add('build-result')
+
+        @panel.item.appendChild(@resultDiv)
+        @panel.hide()
+
+        @subscriptions.add atom.commands.add 'atom-workspace',
+            'core:cancel': =>
+                @closePanel()
 
     deactivate: ->
         @modalPanel.destroy()
         @subscriptions.dispose()
         @nimrodView.destroy()
+
+    closePanel: ->
+        @panel.hide()
 
     serialize: ->
         nimrodViewState: @nimrodView.serialize()
@@ -82,14 +103,24 @@ module.exports = Nimrod =
                         @socket.send JSON.stringify msg
 
                     @socket.on 'message', (data) =>
-                        console.log "Got message #{data}"
+                        # console.log "Got message #{data}"
                         msg = JSON.parse data
                         if msg.state != undefined and msg.state == 'OK'
                             atom.notifications.addSuccess("Build complete")
                         if msg.api.intent == 'stderr'
-                            atom.notifications.addError(msg.text)
+                            stderrPanel = document.createElement('div')
+                            stderrPanel.textContent = msg.text
+                            stderrPanel.classList.add('stderr-out')
+                            @resultDiv.appendChild(stderrPanel)
+
+                            @panel.show()
                         if msg.api.intent == 'stdout'
-                            atom.notifications.addInfo(msg.text)
+                            stdoutPanel = document.createElement('div')
+                            stdoutPanel.textContent = msg.text
+                            stdoutPanel.classList.add('stdout-out')
+                            @resultDiv.appendChild(stdoutPanel)
+
+                            @panel.show()
                         if msg.api.intent == 'registerSuccess'
                             @registered = true
                             callback true
@@ -221,7 +252,14 @@ module.exports = Nimrod =
                     alert("Your config file is not a valid JSON")
                     return
 
-                callback parsed, dir.getPath()
+                configData = {}
+                # do some version compatibility checks
+                if parsed.resource == undefined
+                    # version <= 1.0.0 compatibility
+                    configData.resource = parsed
+                else
+                    configData = parsed
+                callback configData, dir.getPath()
             else
                 atom.notifications.addError("Unable to read Config file!")
 
