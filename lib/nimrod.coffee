@@ -12,8 +12,6 @@ module.exports = Nimrod =
     modalPanel: null
     subscriptions: null
     socket: null
-    registered: null
-    nimrodConfig: null
 
     config:
     	syncProfile:
@@ -68,12 +66,12 @@ module.exports = Nimrod =
             if config.resource.ci != undefined
                 port = config.resource.ci.port
                 target = config.resource.target
-                if @socket == null
+                if @socket == null or @socket == undefined
                     # probably also check of the connection is still up?
                     host = atom.config.get('nimrod.syncServer')
                     @socket = new ws("ws://#{host}:#{port}/nimrod")
 
-                    @socket.on 'open', ->
+                    @socket.on 'open', =>
                         atom.notifications.addInfo("Connected to build Server")
                         msg =
                             'api':
@@ -83,21 +81,26 @@ module.exports = Nimrod =
                             'host': 'atom-package'
                         @socket.send JSON.stringify msg
 
-                    @socket.on 'message', (data) ->
+                    @socket.on 'message', (data) =>
                         console.log "Got message #{data}"
                         msg = JSON.parse data
-                        if msg.state == 'OK'
+                        if msg.state != undefined and msg.state == 'OK'
                             atom.notifications.addSuccess("Build complete")
+                        if msg.api.intent == 'stderr'
+                            atom.notifications.addError(msg.text)
+                        if msg.api.intent == 'stdout'
+                            atom.notifications.addInfo(msg.text)
                         if msg.api.intent == 'registerSuccess'
                             @registered = true
                             callback true
 
-                    @socket.on 'close', ->
+                    @socket.on 'close', =>
                         atom.notifications.addWarning("Disconnected from build Server")
+                        # set socket to null so that it can be reopened later
+                        @socket = null
+                        @registered = false
 
-                    # set socket to null so that it can be reopened later
-                    @socket = null
-                    @registered = false
+                        # NOTE: we should reconnect here automatically?
             else
                 console.log "CI is not set, skipping"
                 callback false
@@ -108,17 +111,18 @@ module.exports = Nimrod =
             @connectToCloud ((success) ->
                 if success and @registered
                     @getConfig ((config, dir) ->
-                        @buildContent(config.resource.target)
+                        @buildContent(config.resource.name, config.resource.target)
                     ).bind this
                 else
                     atom.notifications.addError("Unable to build with socket offline")
             ).bind this
 
-    buildContent: (target) ->
+    buildContent: (project, target) ->
         msg =
             'api':
                 'version': '4.2.0'
                 'intent': 'build'
+            'project': project
             'path': target
         @socket.send JSON.stringify msg
 
@@ -135,7 +139,7 @@ module.exports = Nimrod =
         if target != undefined and target != ''
             if syncServer != '' and syncToCloud
                 # spawn rsync process
-                console.log "Sync: "+dir+" -> "+syncProfile+'@'+syncServer+':./'+target+'/'
+                # console.log "Sync: "+dir+" -> "+syncProfile+'@'+syncServer+':./'+target+'/'
                 sync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
                     syncProfile+'@'+syncServer+':./'+target+'/']
 
@@ -179,58 +183,57 @@ module.exports = Nimrod =
             console.log("Resource is empty, not syncing")
 
     getConfig: (callback)->
-        if @nimrodConfig == undefined or @nimrodConfig == null
-            @nimrodConfig = {}
-            syncProfile = atom.config.get('nimrod.syncProfile')
-            syncServer = atom.config.get('nimrod.syncServer')
-            robotIpAddr = atom.config.get('nimrod.syncServer')
-
-            if syncProfile == '' and syncServer == '' and robotIpAddr == ''
-                atom.notifications.addWarning("No profiles for Nimrod setup yet. Visit the settings to set up your profile.")
+        # find the rood folder of the current path.
+        # the root folder will be determined by the existance
+        # of the nimrod.json
+        currentPath = atom.workspace.getActivePaneItem().buffer.file.path
+        dir = new File(currentPath).getParent()
+        file = undefined
+        while (true)
+            confFile = dir.getPath() + path.sep + "nimrod.json"
+            file = new File(confFile)
+            exists = file.existsSync()
+            isRoot = dir.isRoot()
+            if isRoot and exists is false
+                atom.notifications.addError('Nimrod could not find its config file, please make sure the nimrod.json exists in the root folder of your project')
                 return
+            break if isRoot or exists
+            dir = dir.getParent()
 
-            @nimrodConfig.profile = syncProfile+'@'+syncServer
+        # NOTE: each time the user saves, the nimrod.json can
+        # potentially have changed, so there is for now nothing
+        # else we can do but to reload the file every time someone
+        # saves a file.
+        syncProfile = atom.config.get('nimrod.syncProfile')
+        syncServer = atom.config.get('nimrod.syncServer')
+        robotIpAddr = atom.config.get('nimrod.syncServer')
 
-            currentPath = atom.workspace.getActivePaneItem().buffer.file.path
+        if syncProfile == '' and syncServer == '' and robotIpAddr == ''
+            atom.notifications.addWarning("No profiles for Nimrod setup yet. Visit the settings to set up your profile.")
+            return
 
-            dir = new File(currentPath).getParent()
-            file = undefined
-            while (true)
-                confFile = dir.getPath() + path.sep + "nimrod.json"
-                file = new File(confFile)
-                exists = file.existsSync()
-                isRoot = dir.isRoot()
-                if isRoot and exists is false
-                    atom.notifications.addError('Nimrod could not find its config file, please make sure the nimrod.json exists in the root folder of your project')
+        # open the file, and return its content to the callback
+        fs.readFile confFile, (err,data)=>
+            if data
+                try
+                    parsed = JSON.parse(data)
+                catch e
+                    alert("Your config file is not a valid JSON")
                     return
-                break if isRoot or exists
-                dir = dir.getParent()
 
-            fs.readFile confFile, (err,data)=>
-                if data
-                    try
-                        parsed = JSON.parse(data)
-                    catch e
-                        alert("Your config file is not a valid JSON")
-                        return
-
-                    @nimrodConfig.parsed = parsed
-                    @nimrodConfig.cwd = dir.getPath()
-                    @nimrodConfig.dir = dir
-                    callback parsed, dir.getPath()
-                else
-                    atom.notifications.addError("Unable to read Config file!")
-        else
-            callback @nimrodConfig.parsed, @nimrodConfig.cwd
+                callback parsed, dir.getPath()
+            else
+                atom.notifications.addError("Unable to read Config file!")
 
     executeOn: (currentPath)->
+        console.log "executeOn #{currentPath}"
         @getConfig ((config, dir) ->
             notifications = atom.config.get('nimrod.showNotifications')
             if notifications is true
                 atom.notifications.addInfo('Synching data...')
 
             # try syncing data to the remote Server
-            @syncToServer(config, currentPath)
+            @syncToServer(config, dir)
             # try to sync data to the robot
-            @syncToRobot(config, currentPath)
+            @syncToRobot(config, dir)
         ).bind this
