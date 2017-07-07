@@ -35,11 +35,11 @@ to have rsync work you at least need the `target` and `resourceName` fields fill
 ```json
 {
     "resource": {
-        "name": "JetStream",
+        "name": "jetstream",
         "version": "1.0.0",
         "description": "Blackout Technologies Utility Library, Python2 and Python3 compatible",
-        "resourceName": "JetStream",
-        "target": "development/Libs/JetStream"
+        "resourceName": "jetstream",
+        "target": "development/Libs/jetstream"
     },
     "system": {
         "version": "0.1.4"
