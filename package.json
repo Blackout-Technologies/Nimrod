@@ -1,37 +1,57 @@
 {
-  "name": "nimrod",
-  "main": "./lib/nimrod",
-  "version": "0.4.0",
-  "description": "Assign per project target folder that can be synchronised to a remote location.",
-  "license": "MIT",
-  "engines": {
-    "atom": ">=0.174.0 <2.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Blackout-Technologies/Nimrod"
-  },
-  "keywords": [
-    "monitor",
-    "watch",
-    "watcher",
-    "file",
-    "folder",
-    "directory",
-    "rsync",
-    "sync",
-    "save",
-    "edited",
-    "modified"
-  ],
-  "author": {
-    "name": "Marc Fiedler"
-  },
-  "bugs": {
-    "url": "https://github.com/Blackout-Technologies/Nimrod/issues"
-  },
-  "homepage": "https://blackout.ai/",
-  "dependencies": {
-    "ws": "*"
-  }
+    "name": "nimrod",
+
+    "main": "./lib/nimrod",
+    "version": "0.4.0",
+    "description": "Sync files to remote location and remote build on project basis.",
+    "license": "MIT",
+
+    "type": "app",
+    "state": "dev",
+    "sync": {
+        "cloud": false,
+        "robot": true
+    },
+    "ci": {
+        "host": "snakebot.eu",
+        "port": 8100
+    },
+
+    "engines": {
+        "atom": ">=0.174.0 <2.0.0"
+    },
+
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Blackout-Technologies/Nimrod"
+    },
+
+    "keywords": [
+        "monitor",
+        "watch",
+        "build",
+        "file",
+        "folder",
+        "directory",
+        "rsync",
+        "sync",
+        "save",
+        "edited",
+        "modified"
+    ],
+
+    "author": {
+      "name": "Marc Fiedler",
+      "url": "https://blackout.ai/",
+      "mail": "hi@blackout.ai"
+    },
+
+    "bugs": {
+        "url": "https://github.com/Blackout-Technologies/Nimrod/issues"
+    },
+    "homepage": "https://blackout.ai/",
+
+    "dependencies": {
+        "ws": "*"
+    }
 }

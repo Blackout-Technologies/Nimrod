@@ -84,9 +84,9 @@ module.exports = Nimrod =
 
     connectToCloud: (callback) ->
         @getConfig ((config, dir) ->
-            if config.resource.ci != undefined
-                port = config.resource.ci.port
-                target = config.resource.target
+            if config.ci != undefined
+                port = config.ci.port
+                target = config.state+'/'+config.type+'s/'+data.name
                 if @socket == null or @socket == undefined
                     # probably also check of the connection is still up?
                     host = atom.config.get('nimrod.syncServer')
@@ -142,19 +142,19 @@ module.exports = Nimrod =
             @connectToCloud ((success) ->
                 if success and @registered
                     @getConfig ((config, dir) ->
-                        @buildContent(config.resource.name, config.resource.target)
+                        @buildContent(config)
                     ).bind this
                 else
                     atom.notifications.addError("Unable to build with socket offline")
             ).bind this
 
-    buildContent: (project, target) ->
+    buildContent: (project) ->
         msg =
             'api':
                 'version': '4.2.0'
                 'intent': 'build'
-            'project': project
-            'path': target
+            'project': project.name
+            'path': project.state+'/'+project.type+'s'
         @socket.send JSON.stringify msg
 
     syncToServer: (data, dir)->
@@ -162,40 +162,49 @@ module.exports = Nimrod =
         notifications = atom.config.get('nimrod.showNotifications')
         syncProfile = atom.config.get('nimrod.syncProfile')
         syncServer = atom.config.get('nimrod.syncServer')
-        target = data.resource.target
-        syncToCloud = data.resource.syncToCloud
-        if syncToCloud == undefined
+        target = data.state+'/'+data.type+'s/'+data.name
+        syncToCloud = false
+        if data.sync != undefined
+            if data.sync.cloud
+                syncToCloud = true
+        else
             syncToCloud = true
 
-        if target != undefined and target != ''
-            if syncServer != '' and syncToCloud
-                # spawn rsync process
-                # console.log "Sync: "+dir+" -> "+syncProfile+'@'+syncServer+':./'+target+'/'
-                sync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
-                    syncProfile+'@'+syncServer+':./'+target+'/']
+        if syncServer != '' and syncToCloud
+            if notifications is true
+                atom.notifications.addInfo('Synching '+data.name+' to cloud')
 
-                sync.stderr.on 'data', (data) ->
-                    atom.notifications.addError(data.toString().trim())
+            # spawn rsync process
+            console.log "Sync: "+dir+" -> "+syncProfile+'@'+syncServer+':./'+target+'/'
+            sync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
+                syncProfile+'@'+syncServer+':./'+target+'/']
 
-                sync.on 'close', (code) ->
-                    if code == 0
-                        if notifications is true
-                            atom.notifications.addSuccess('Project successfully synched')
-                        else
-                            console.log "No command executed."
+            sync.stderr.on 'data', (data) ->
+                atom.notifications.addError(data.toString().trim())
+
+            sync.on 'close', (code) ->
+                if code == 0
+                    if notifications is true
+                        atom.notifications.addSuccess('Project successfully synched')
                     else
-                        atom.notifications.addError('Unable to synch project!')
+                        console.log "No command executed."
+                else
+                    atom.notifications.addError('Unable to synch project!')
 
     syncToRobot: (data, dir) ->
         # Sync data to robot in your network
         notifications = atom.config.get('nimrod.showNotifications')
 
-        console.log 'nao@'+robotIpAddr+':./'+data.resource.target+'/'
-        if data.resource.syncToRobot != undefined and data.resource.syncToRobot
+        target = data.state+'/'+data.type+'s/'+data.name
+        console.log 'nao@'+robotIpAddr+':./'+target+'/'
+        if data.sync != undefined and data.sync.robot
             robotIpAddr = atom.config.get('nimrod.robotIp')
             if robotIpAddr != ''
+                if notifications is true
+                    atom.notifications.addInfo('Synching '+data.name+' to cloud')
+
                 roboSync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
-                    'nao@'+robotIpAddr+':./'+data.resource.target+'/']
+                    'nao@'+robotIpAddr+':./'+target+'/']
 
                 roboSync.stderr.on 'data', (data) ->
                     atom.notifications.addError(data.toString().trim())
@@ -221,7 +230,7 @@ module.exports = Nimrod =
         dir = new File(currentPath).getParent()
         file = undefined
         while (true)
-            confFile = dir.getPath() + path.sep + "nimrod.json"
+            confFile = dir.getPath() + path.sep + "package.json"
             file = new File(confFile)
             exists = file.existsSync()
             isRoot = dir.isRoot()
@@ -252,24 +261,13 @@ module.exports = Nimrod =
                     alert("Your config file is not a valid JSON")
                     return
 
-                configData = {}
-                # do some version compatibility checks
-                if parsed.resource == undefined
-                    # version <= 1.0.0 compatibility
-                    configData.resource = parsed
-                else
-                    configData = parsed
+                configData = parsed
                 callback configData, dir.getPath()
             else
                 atom.notifications.addError("Unable to read Config file!")
 
     executeOn: (currentPath)->
-        console.log "executeOn #{currentPath}"
         @getConfig ((config, dir) ->
-            notifications = atom.config.get('nimrod.showNotifications')
-            if notifications is true
-                atom.notifications.addInfo('Synching data...')
-
             # try syncing data to the remote Server
             @syncToServer(config, dir)
             # try to sync data to the robot
