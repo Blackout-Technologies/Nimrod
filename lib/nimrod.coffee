@@ -78,6 +78,10 @@ module.exports = Nimrod =
 
     closePanel: ->
         @panel.hide()
+        @resultDiv.remove() if @resultDiv
+        @resultDiv = document.createElement('div')
+        @resultDiv.classList.add('build-result')
+        @panel.item.appendChild(@resultDiv)
 
     serialize: ->
         nimrodViewState: @nimrodView.serialize()
@@ -86,7 +90,7 @@ module.exports = Nimrod =
         @getConfig ((config, dir) ->
             if config.ci != undefined
                 port = config.ci.port
-                target = config.state+'/'+config.type+'s/'+data.name
+                target = config.state+'/'+config.type+'s/'+config.name
                 if @socket == null or @socket == undefined
                     # probably also check of the connection is still up?
                     host = atom.config.get('nimrod.syncServer')
@@ -109,7 +113,8 @@ module.exports = Nimrod =
                             atom.notifications.addSuccess("Build complete")
                         if msg.api.intent == 'stderr'
                             stderrPanel = document.createElement('div')
-                            stderrPanel.textContent = msg.text
+                            text = msg.text.replace /(?:\r\n|\r|\n)/g, '<br />'
+                            stderrPanel.textContent = text
                             stderrPanel.classList.add('stderr-out')
                             @resultDiv.appendChild(stderrPanel)
 
@@ -132,21 +137,23 @@ module.exports = Nimrod =
                         @registered = false
 
                         # NOTE: we should reconnect here automatically?
+                else
+                    callback true
             else
                 console.log "CI is not set, skipping"
                 callback false
         ).bind this
 
     toggle: ->
-        if @socket == undefined or @socket == null
-            @connectToCloud ((success) ->
-                if success and @registered
-                    @getConfig ((config, dir) ->
-                        @buildContent(config)
-                    ).bind this
-                else
-                    atom.notifications.addError("Unable to build with socket offline")
-            ).bind this
+        @connectToCloud ((success) ->
+            if success and @registered
+                atom.notifications.addInfo("Building...")
+                @getConfig ((config, dir) ->
+                    @buildContent(config)
+                ).bind this
+            else
+                atom.notifications.addError("Unable to build with socket offline")
+        ).bind this
 
     buildContent: (project) ->
         msg =
