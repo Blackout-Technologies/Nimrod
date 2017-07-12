@@ -113,15 +113,43 @@ module.exports = Nimrod =
                             atom.notifications.addSuccess("Build complete")
                         if msg.api.intent == 'stderr'
                             stderrPanel = document.createElement('div')
-                            text = msg.text.replace /(?:\r\n|\r|\n)/g, '<br />'
-                            stderrPanel.textContent = text
+                            textParts = msg.text.split("\n")
+                            for part in textParts
+                                stdoutLine = document.createElement('div')
+                                stdoutInfo = document.createElement('span')
+                                stdoutInfo.classList.add('stderr-out-info')
+                                stdoutText = document.createElement('spen')
+                                stdoutText.classList.add('stderr-out-text')
+
+                                part = part.replace("[Nimrod]: ", "")
+                                stdoutInfo.textContent = "[ Build ] "
+                                stdoutText.textContent = part
+
+                                stdoutLine.appendChild(stdoutInfo)
+                                stdoutLine.appendChild(stdoutText)
+                                stderrPanel.appendChild(stdoutLine)
                             stderrPanel.classList.add('stderr-out')
                             @resultDiv.appendChild(stderrPanel)
 
                             @panel.show()
                         if msg.api.intent == 'stdout'
                             stdoutPanel = document.createElement('div')
-                            stdoutPanel.textContent = msg.text
+                            textParts = msg.text.split("\n")
+                            for part in textParts
+                                stdoutLine = document.createElement('div')
+                                stdoutInfo = document.createElement('span')
+                                stdoutInfo.classList.add('stdout-out-info')
+                                stdoutText = document.createElement('spen')
+                                stdoutText.classList.add('stdout-out-text')
+
+                                part = part.replace("[Nimrod]: ", "")
+                                stdoutInfo.textContent = "[ Build ] "
+                                stdoutText.textContent = part
+
+                                stdoutLine.appendChild(stdoutInfo)
+                                stdoutLine.appendChild(stdoutText)
+                                stdoutPanel.appendChild(stdoutLine)
+
                             stdoutPanel.classList.add('stdout-out')
                             @resultDiv.appendChild(stdoutPanel)
 
