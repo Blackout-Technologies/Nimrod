@@ -91,6 +91,8 @@ module.exports = Nimrod =
             if config.ci != undefined
                 port = config.ci.port
                 target = config.state+'/'+config.type+'s/'+config.name
+                syncProfile = atom.config.get('nimrod.syncProfile')
+
                 if @socket == null or @socket == undefined
                     # probably also check of the connection is still up?
                     host = atom.config.get('nimrod.syncServer')
@@ -104,6 +106,7 @@ module.exports = Nimrod =
                                 'intent': 'register'
                             'interface': 'af108bb4c6f8c73129c2ac485b2a19a5'
                             'host': 'atom-package'
+                            'profile': 'aton-'+syncProfile
                         @socket.send JSON.stringify msg
 
                     @socket.on 'message', (data) =>
@@ -137,7 +140,7 @@ module.exports = Nimrod =
                                 'api':
                                     'version': '4.2.0'
                                     'intent': 'subscribe'
-                                'topic': 'buildInfo'
+                                'topic': syncProfile
                             @socket.send JSON.stringify buildMsg
 
                             @registered = true
