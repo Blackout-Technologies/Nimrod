@@ -8,7 +8,7 @@
   "state": "dev",
   "sync": {
     "cloud": false,
-    "robot": true
+    "robot": false
   },
   "ci": {
     "host": "snakebot.eu",

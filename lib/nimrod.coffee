@@ -111,15 +111,15 @@ module.exports = Nimrod =
                         msg = JSON.parse data
                         if msg.state != undefined and msg.state == 'OK'
                             atom.notifications.addSuccess("Build complete")
-                        if msg.api.intent == 'stderr'
+                        if msg.api.intent == 'info'
                             stderrPanel = document.createElement('div')
                             textParts = msg.text.split("\n")
                             for part in textParts
                                 stdoutLine = document.createElement('div')
                                 stdoutInfo = document.createElement('span')
-                                stdoutInfo.classList.add('stderr-out-info')
+                                stdoutInfo.classList.add(msg.type+'-out-info')
                                 stdoutText = document.createElement('spen')
-                                stdoutText.classList.add('stderr-out-text')
+                                stdoutText.classList.add(msg.type+'-out-text')
 
                                 part = part.replace("[Nimrod]: ", "")
                                 stdoutInfo.textContent = "[ Build ] "
@@ -128,33 +128,18 @@ module.exports = Nimrod =
                                 stdoutLine.appendChild(stdoutInfo)
                                 stdoutLine.appendChild(stdoutText)
                                 stderrPanel.appendChild(stdoutLine)
-                            stderrPanel.classList.add('stderr-out')
+                            stderrPanel.classList.add(msg.info+'-out')
                             @resultDiv.appendChild(stderrPanel)
 
                             @panel.show()
-                        if msg.api.intent == 'stdout'
-                            stdoutPanel = document.createElement('div')
-                            textParts = msg.text.split("\n")
-                            for part in textParts
-                                stdoutLine = document.createElement('div')
-                                stdoutInfo = document.createElement('span')
-                                stdoutInfo.classList.add('stdout-out-info')
-                                stdoutText = document.createElement('spen')
-                                stdoutText.classList.add('stdout-out-text')
-
-                                part = part.replace("[Nimrod]: ", "")
-                                stdoutInfo.textContent = "[ Build ] "
-                                stdoutText.textContent = part
-
-                                stdoutLine.appendChild(stdoutInfo)
-                                stdoutLine.appendChild(stdoutText)
-                                stdoutPanel.appendChild(stdoutLine)
-
-                            stdoutPanel.classList.add('stdout-out')
-                            @resultDiv.appendChild(stdoutPanel)
-
-                            @panel.show()
                         if msg.api.intent == 'registerSuccess'
+                            buildMsg =
+                                'api':
+                                    'version': '4.2.0'
+                                    'intent': 'subscribe'
+                                'topic': 'buildInfo'
+                            @socket.send JSON.stringify buildMsg
+
                             @registered = true
                             callback true
 
@@ -184,12 +169,14 @@ module.exports = Nimrod =
         ).bind this
 
     buildContent: (project) ->
+        syncProfile = atom.config.get('nimrod.syncProfile')
         msg =
             'api':
                 'version': '4.2.0'
                 'intent': 'build'
             'project': project.name
             'path': project.state+'/'+project.type+'s'
+            'profile': syncProfile
         @socket.send JSON.stringify msg
 
     syncToServer: (data, dir)->
