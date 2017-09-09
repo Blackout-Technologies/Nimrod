@@ -90,7 +90,10 @@ module.exports = Nimrod =
         @getConfig ((config, dir) ->
             if config.ci != undefined
                 port = config.ci.port
-                target = config.state+'/'+config.type+'s/'+config.name
+                packageNameTmp = config.name.split('/')
+                packageName = packageNameTmp[packageNameTmp.length - 1]
+                target = config.state+'/'+config.type+'s/'+packageName
+                console.log target
                 syncProfile = atom.config.get('nimrod.syncProfile')
 
                 if @socket == null or @socket == undefined
@@ -187,7 +190,9 @@ module.exports = Nimrod =
         notifications = atom.config.get('nimrod.showNotifications')
         syncProfile = atom.config.get('nimrod.syncProfile')
         syncServer = atom.config.get('nimrod.syncServer')
-        target = data.state+'/'+data.type+'s/'+data.name
+        packageNameTmp = data.name.split('/')
+        packageName = packageNameTmp[packageNameTmp.length - 1]
+        target = data.state+'/'+data.type+'s/'+packageName
         syncToCloud = false
         if data.sync != undefined
             if data.sync.cloud
@@ -197,7 +202,7 @@ module.exports = Nimrod =
 
         if syncServer != '' and syncToCloud
             if notifications is true
-                atom.notifications.addInfo('Synching '+data.name+' to cloud')
+                atom.notifications.addInfo('Synching '+packageName+' to cloud')
 
             # spawn rsync process
             console.log "Sync: "+dir+" -> "+syncProfile+'@'+syncServer+':./'+target+'/'
@@ -220,13 +225,15 @@ module.exports = Nimrod =
         # Sync data to robot in your network
         notifications = atom.config.get('nimrod.showNotifications')
 
-        target = data.state+'/'+data.type+'s/'+data.name
+        packageNameTmp = data.name.split('/')
+        packageName = packageNameTmp[packageNameTmp.length - 1]
+        target = data.state+'/'+data.type+'s/'+packageName
         console.log 'nao@'+robotIpAddr+':./'+target+'/'
         if data.sync != undefined and data.sync.robot
             robotIpAddr = atom.config.get('nimrod.robotIp')
             if robotIpAddr != ''
                 if notifications is true
-                    atom.notifications.addInfo('Synching '+data.name+' to cloud')
+                    atom.notifications.addInfo('Synching '+packageName+' to robot')
 
                 roboSync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
                     'nao@'+robotIpAddr+':./'+target+'/']
