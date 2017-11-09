@@ -15,25 +15,54 @@ module.exports = Nimrod =
     panel: null
 
     config:
-    	syncProfile:
-    		type: 'string'
-    		default: ''
-    		title: 'Profile for Synchronisation'
-
-    	syncServer:
-    		type: 'string'
-    		default: ''
-    		title: 'Server for Synchronisation'
-
-    	showNotifications:
-    		type: 'boolean'
-    		default: 'true'
-    		title: 'Display notifications'
-
-    	robotIp:
-    		type: 'string'
-    		default: ''
-    		title: 'Robot name or IP address'
+        targetOne:
+            type: 'string'
+            title: 'Target profile'
+            default: 'you@yourserver.com'
+        targetOneName:
+            type: 'string'
+            title: 'Target name'
+            default: 'My Server'
+        targetTwo:
+            type: 'string'
+            title: 'Target profile'
+            default: 'you@yourserver.com'
+        targetTwoName:
+            type: 'string'
+            title: 'Target name'
+            default: 'My Server'
+        targetThree:
+            type: 'string'
+            title: 'Target profile'
+            default: 'you@yourserver.com'
+        targetThreeName:
+            type: 'string'
+            title: 'Target name'
+            default: 'My Server'
+        targetFour:
+            type: 'string'
+            title: 'Target profile'
+            default: 'you@yourserver.com'
+        targetFourName:
+            type: 'string'
+            title: 'Target name'
+            default: 'My Server'
+        targetFive:
+            type: 'string'
+            title: 'Target profile'
+            default: 'you@yourserver.com'
+        targetFiveName:
+            type: 'string'
+            title: 'Target name'
+            default: 'My Server'
+        customNamespace:
+            type: 'string'
+            default: ''
+            title: 'Your custom namespace'
+        showNotifications:
+            type: 'boolean'
+            default: true
+            title: 'Show info notifications'
 
     activate: (state) ->
         @nimrodView = new NimrodView(state.nimrodViewState)
@@ -51,208 +80,92 @@ module.exports = Nimrod =
                 catch error
                     console.log error
 
-        # Register command that toggles this view
-        @subscriptions.add atom.commands.add 'atom-workspace',
-            'nimrod:toggle': =>
-                @toggle()
-
-        @panel = atom.workspace.addBottomPanel(
-            item: document.createElement('div'),
-            priority: 300
-        )
-
-        @resultDiv = document.createElement('div')
-        @resultDiv.classList.add('build-result')
-
-        @panel.item.appendChild(@resultDiv)
-        @panel.hide()
-
-        @subscriptions.add atom.commands.add 'atom-workspace',
-            'core:cancel': =>
-                @closePanel()
-
     deactivate: ->
         @modalPanel.destroy()
         @subscriptions.dispose()
         @nimrodView.destroy()
 
-    closePanel: ->
-        @panel.hide()
-        @resultDiv.remove() if @resultDiv
-        @resultDiv = document.createElement('div')
-        @resultDiv.classList.add('build-result')
-        @panel.item.appendChild(@resultDiv)
-
     serialize: ->
         nimrodViewState: @nimrodView.serialize()
-
-    connectToCloud: (callback) ->
-        @getConfig ((config, dir) ->
-            if config.ci != undefined
-                port = config.ci.port
-                packageNameTmp = config.name.split('/')
-                packageName = packageNameTmp[packageNameTmp.length - 1]
-                target = config.state+'/'+config.type+'s/'+packageName
-                console.log target
-                syncProfile = atom.config.get('nimrod.syncProfile')
-
-                if @socket == null or @socket == undefined
-                    # probably also check of the connection is still up?
-                    host = atom.config.get('nimrod.syncServer')
-                    @socket = new ws("ws://#{host}:#{port}/nimrod")
-
-                    @socket.on 'open', =>
-                        atom.notifications.addInfo("Connected to build Server")
-                        msg =
-                            'api':
-                                'version': '4.2.0'
-                                'intent': 'register'
-                            'interface': 'af108bb4c6f8c73129c2ac485b2a19a5'
-                            'host': 'atom-package'
-                            'profile': 'aton-'+syncProfile
-                        @socket.send JSON.stringify msg
-
-                    @socket.on 'message', (data) =>
-                        # console.log "Got message #{data}"
-                        msg = JSON.parse data
-                        if msg.state != undefined and msg.state == 'OK'
-                            atom.notifications.addSuccess("Build complete")
-                        if msg.api.intent == 'info'
-                            stderrPanel = document.createElement('div')
-                            textParts = msg.text.split("\n")
-                            for part in textParts
-                                stdoutLine = document.createElement('div')
-                                stdoutInfo = document.createElement('span')
-                                stdoutInfo.classList.add(msg.type+'-out-info')
-                                stdoutText = document.createElement('spen')
-                                stdoutText.classList.add(msg.type+'-out-text')
-
-                                part = part.replace("[Nimrod]: ", "")
-                                stdoutInfo.textContent = "[ Build ] "
-                                stdoutText.textContent = part
-
-                                stdoutLine.appendChild(stdoutInfo)
-                                stdoutLine.appendChild(stdoutText)
-                                stderrPanel.appendChild(stdoutLine)
-                            stderrPanel.classList.add(msg.info+'-out')
-                            @resultDiv.appendChild(stderrPanel)
-
-                            @panel.show()
-                        if msg.api.intent == 'registerSuccess'
-                            buildMsg =
-                                'api':
-                                    'version': '4.2.0'
-                                    'intent': 'subscribe'
-                                'topic': syncProfile
-                            @socket.send JSON.stringify buildMsg
-
-                            @registered = true
-                            callback true
-
-                    @socket.on 'close', =>
-                        atom.notifications.addWarning("Disconnected from build Server")
-                        # set socket to null so that it can be reopened later
-                        @socket = null
-                        @registered = false
-
-                        # NOTE: we should reconnect here automatically?
-                else
-                    callback true
-            else
-                console.log "CI is not set, skipping"
-                callback false
-        ).bind this
-
-    toggle: ->
-        @connectToCloud ((success) ->
-            if success and @registered
-                atom.notifications.addInfo("Building...")
-                @getConfig ((config, dir) ->
-                    @buildContent(config)
-                ).bind this
-            else
-                atom.notifications.addError("Unable to build with socket offline")
-        ).bind this
-
-    buildContent: (project) ->
-        syncProfile = atom.config.get('nimrod.syncProfile')
-        msg =
-            'api':
-                'version': '4.2.0'
-                'intent': 'build'
-            'project': project.name
-            'path': project.state+'/'+project.type+'s'
-            'profile': syncProfile
-        @socket.send JSON.stringify msg
 
     syncToServer: (data, dir)->
         # Sync data to remote server
         notifications = atom.config.get('nimrod.showNotifications')
-        syncProfile = atom.config.get('nimrod.syncProfile')
-        syncServer = atom.config.get('nimrod.syncServer')
+        userNamespace = atom.config.get('nimrod.customNamespace')
+        console.log "Syncing in progress "+userNamespace+"...."
+
         packageNameTmp = data.name.split('/')
         packageName = packageNameTmp[packageNameTmp.length - 1]
-        target = data.state+'/'+data.type+'s/'+packageName
-        syncToCloud = false
-        if data.sync != undefined
-            if data.sync.cloud
-                syncToCloud = true
-        else
-            syncToCloud = true
 
-        if syncServer != '' and syncToCloud
-            if notifications is true
-                atom.notifications.addInfo('Synching '+packageName+' to cloud')
+        target = ""
+        if userNamespace != undefined
+            target = target+'/'+userNamespace
 
-            # spawn rsync process
-            console.log "Sync: "+dir+" -> "+syncProfile+'@'+syncServer+':./'+target+'/'
-            sync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
-                syncProfile+'@'+syncServer+':./'+target+'/']
+        if data.state != undefined
+            target = target+'/'+data.state
 
-            sync.stderr.on 'data', (data) ->
-                atom.notifications.addError(data.toString().trim())
+        if data.type != undefined
+            target = target+'/'+data.type+'s'
 
-            sync.on 'close', (code) ->
-                if code == 0
+        target = target+'/'+packageName
+
+        targets = []
+        targets.push
+            name: atom.config.get('nimrod.targetOneName')
+            location: atom.config.get('nimrod.targetOne')
+
+        targets.push
+            name: atom.config.get('nimrod.targetTwoName')
+            location: atom.config.get('nimrod.targetTwo')
+
+        targets.push
+            name: atom.config.get('nimrod.targetThreeName')
+            location: atom.config.get('nimrod.targetThree')
+
+        targets.push
+            name: atom.config.get('nimrod.targetFourName')
+            location: atom.config.get('nimrod.targetFour')
+
+        targets.push
+            name: atom.config.get('nimrod.targetFiveName')
+            location: atom.config.get('nimrod.targetFive')
+
+        if notifications is true
+            atom.notifications.addInfo('Synching Targets')
+
+        i = 0
+        while i < targets.length
+            server = targets[i];
+
+            sync = true
+            if data.exclude != undefined
+                if data.exclude[server.name] != undefined
+                    sync = false
+
+            if server.location == undefined or server.location == "you@yourserver.com"
+                sync = false
+
+            if sync is true
+                # spawn rsync process
+                console.log "Sync: "+dir+" -> "+server.location+':.'+target+'/'
+                sync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
+                    server.location+':.'+target+'/']
+
+                sync.stderr.on 'data', (data) ->
+                    console.error(data.toString().trim())
                     if notifications is true
-                        atom.notifications.addSuccess('Project successfully synched')
-                    else
-                        console.log "No command executed."
-                else
-                    atom.notifications.addError('Unable to synch project!')
+                        atom.notifications.addError("Sync failed")
 
-    syncToRobot: (data, dir) ->
-        # Sync data to robot in your network
-        notifications = atom.config.get('nimrod.showNotifications')
-
-        packageNameTmp = data.name.split('/')
-        packageName = packageNameTmp[packageNameTmp.length - 1]
-        target = data.state+'/'+data.type+'s/'+packageName
-        console.log 'nao@'+robotIpAddr+':./'+target+'/'
-        if data.sync != undefined and data.sync.robot
-            robotIpAddr = atom.config.get('nimrod.robotIp')
-            if robotIpAddr != ''
-                if notifications is true
-                    atom.notifications.addInfo('Synching '+packageName+' to robot')
-
-                roboSync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
-                    'nao@'+robotIpAddr+':./'+target+'/']
-
-                roboSync.stderr.on 'data', (data) ->
-                    atom.notifications.addError(data.toString().trim())
-
-                roboSync.on 'close', (code) ->
+                sync.on 'close', (code) ->
                     if code == 0
                         if notifications is true
-                            atom.notifications.addSuccess('Robot code synched')
+                            atom.notifications.addSuccess("Sync success")
                         else
-                            console.log "No command executed."
+                            console.error "No command executed."
                     else
-                        atom.notifications.addError('Unable to synch robot code!')
-            else
-                console.log("Remote Addr is empty, not syncing")
-        else
-            console.log("Resource is empty, not syncing")
+                        if notifications is true
+                            atom.notifications.addError("Sync failed")
+            i++
 
     getConfig: (callback)->
         # find the rood folder of the current path.
@@ -302,6 +215,4 @@ module.exports = Nimrod =
         @getConfig ((config, dir) ->
             # try syncing data to the remote Server
             @syncToServer(config, dir)
-            # try to sync data to the robot
-            @syncToRobot(config, dir)
         ).bind this

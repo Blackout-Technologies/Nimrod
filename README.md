@@ -6,8 +6,8 @@ Leightweight rync for project folders. Sync on save. Integrated with WebSocket c
 |Language|CoffeeScript|
 |Authors|Marc Fiedler - @mf|
 |Copyright|(c)2017 Blackout Technologies [http://blackout.ai]|
-|Current Package Version| 0.4.0|
-|Current System Version| 0.1.4|
+|Current Package Version| 0.9.0|
+|Current System Version| 1.0.2|
 
 Nimrod is the build manager for all Blackout Technologies projects. Its designed to be easy and fast to use.
 This package is the Atom extension of the Build env.

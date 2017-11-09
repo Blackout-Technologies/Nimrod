@@ -6,13 +6,8 @@
   "license": "MIT",
   "type": "app",
   "state": "dev",
-  "sync": {
-    "cloud": false,
-    "robot": false
-  },
-  "ci": {
-    "host": "snakebot.eu",
-    "port": 8100
+  "exclude": {
+      "Hydrax": true
   },
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
