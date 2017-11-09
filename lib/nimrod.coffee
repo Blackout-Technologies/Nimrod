@@ -15,49 +15,13 @@ module.exports = Nimrod =
     panel: null
 
     config:
-        targetOne:
+        profileName:
             type: 'string'
-            title: 'Target profile'
-            default: 'you@yourserver.com'
-        targetOneName:
-            type: 'string'
-            title: 'Target name'
-            default: 'My Server'
-        targetTwo:
-            type: 'string'
-            title: 'Target profile'
-            default: 'you@yourserver.com'
-        targetTwoName:
-            type: 'string'
-            title: 'Target name'
-            default: 'My Server'
-        targetThree:
-            type: 'string'
-            title: 'Target profile'
-            default: 'you@yourserver.com'
-        targetThreeName:
-            type: 'string'
-            title: 'Target name'
-            default: 'My Server'
-        targetFour:
-            type: 'string'
-            title: 'Target profile'
-            default: 'you@yourserver.com'
-        targetFourName:
-            type: 'string'
-            title: 'Target name'
-            default: 'My Server'
-        targetFive:
-            type: 'string'
-            title: 'Target profile'
-            default: 'you@yourserver.com'
-        targetFiveName:
-            type: 'string'
-            title: 'Target name'
-            default: 'My Server'
+            title: 'Profile name'
+            default: ''
         customNamespace:
             type: 'string'
-            default: ''
+            default: 'blackout.ai'
             title: 'Your custom namespace'
         showNotifications:
             type: 'boolean'
@@ -92,7 +56,9 @@ module.exports = Nimrod =
         # Sync data to remote server
         notifications = atom.config.get('nimrod.showNotifications')
         userNamespace = atom.config.get('nimrod.customNamespace')
-        console.log "Syncing in progress "+userNamespace+"...."
+        profileName = atom.config.get('nimrod.profileName')
+
+        console.log "Syncing in progress "+userNamespace+"["+profileName+"]...."
 
         packageNameTmp = data.name.split('/')
         packageName = packageNameTmp[packageNameTmp.length - 1]
@@ -101,71 +67,41 @@ module.exports = Nimrod =
         if userNamespace != undefined
             target = target+'/'+userNamespace
 
-        if data.state != undefined
-            target = target+'/'+data.state
-
-        if data.type != undefined
-            target = target+'/'+data.type+'s'
+        if data.module != undefined
+            target = target+'/'+data.module
 
         target = target+'/'+packageName
 
-        targets = []
-        targets.push
-            name: atom.config.get('nimrod.targetOneName')
-            location: atom.config.get('nimrod.targetOne')
+        console.dir data.sync[profileName]
+        if data.sync != undefined and data.sync[profileName] != undefined
+            if notifications is true
+                atom.notifications.addInfo('Synching Targets')
 
-        targets.push
-            name: atom.config.get('nimrod.targetTwoName')
-            location: atom.config.get('nimrod.targetTwo')
+            for serverKey of data.sync[profileName]
+                server = data.sync[profileName][serverKey]
 
-        targets.push
-            name: atom.config.get('nimrod.targetThreeName')
-            location: atom.config.get('nimrod.targetThree')
+                if server != undefined
+                    # spawn rsync process
+                    console.log "Sync: "+dir+" -> "+server.location+':.'+target+'/'
+                    sync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
+                        server.location+':.'+target+'/']
 
-        targets.push
-            name: atom.config.get('nimrod.targetFourName')
-            location: atom.config.get('nimrod.targetFour')
-
-        targets.push
-            name: atom.config.get('nimrod.targetFiveName')
-            location: atom.config.get('nimrod.targetFive')
-
-        if notifications is true
-            atom.notifications.addInfo('Synching Targets')
-
-        i = 0
-        while i < targets.length
-            server = targets[i];
-
-            sync = true
-            if data.exclude != undefined
-                if data.exclude[server.name] != undefined
-                    sync = false
-
-            if server.location == undefined or server.location == "you@yourserver.com"
-                sync = false
-
-            if sync is true
-                # spawn rsync process
-                console.log "Sync: "+dir+" -> "+server.location+':.'+target+'/'
-                sync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
-                    server.location+':.'+target+'/']
-
-                sync.stderr.on 'data', (data) ->
-                    console.error(data.toString().trim())
-                    if notifications is true
-                        atom.notifications.addError("Sync failed")
-
-                sync.on 'close', (code) ->
-                    if code == 0
-                        if notifications is true
-                            atom.notifications.addSuccess("Sync success")
-                        else
-                            console.error "No command executed."
-                    else
+                    sync.stderr.on 'data', (data) ->
+                        console.error(data.toString().trim())
                         if notifications is true
                             atom.notifications.addError("Sync failed")
-            i++
+
+                    sync.on 'close', (code) ->
+                        if code == 0
+                            if notifications is true
+                                atom.notifications.addSuccess("Sync success")
+                            else
+                                console.error "No command executed."
+                        else
+                            if notifications is true
+                                atom.notifications.addError("Sync failed")
+        else
+            atom.notifications.addError("Your sync profile could not be loaded.")
 
     getConfig: (callback)->
         # find the rood folder of the current path.

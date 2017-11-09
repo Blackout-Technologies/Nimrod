@@ -4,10 +4,12 @@
   "version": "0.9.0",
   "description": "Sync files to remote location and remote build on project basis.",
   "license": "MIT",
-  "type": "app",
-  "state": "dev",
-  "exclude": {
-    "Hydrax": true
+  "module": "misc",
+  "sync": {
+    "mf": [
+        {"name": "Hydrax", "location": "mf@snakebot.eu"},
+        {"name": "Benny", "location": "nao@192.168.1.43"}
+    ]
   },
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
