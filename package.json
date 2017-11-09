@@ -7,14 +7,8 @@
   "module": "misc",
   "sync": {
     "mf": [
-      {
-        "name": "Hydrax",
-        "location": "mf@snakebot.eu"
-      },
-      {
-        "name": "Benny",
-        "location": "nao@192.168.1.43"
-      }
+        "Hydrax",
+        "Benny"
     ]
   },
   "engines": {

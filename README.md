@@ -6,7 +6,7 @@ Leightweight rync for project folders. Sync on save. Integrated with WebSocket c
 |Language|CoffeeScript|
 |Authors|Marc Fiedler - @mf|
 |Copyright|(c)2017 Blackout Technologies [http://blackout.ai]|
-|Current Package Version| 0.9.0|
+|Current Package Version| 0.11.0|
 |Current System Version| 1.0.2|
 
 Nimrod is the build manager for all Blackout Technologies projects. Its designed to be easy and fast to use.
@@ -28,21 +28,21 @@ Just add your username and server and nimrod will sync the files to your remote 
 > NOTE: Nimrod will ignore .git files on sync
 
 ## Configuration
-A config file named `nimrod.json` must be present in the project folder. In order
-to have rsync work you at least need the `target` and `resourceName` fields filled.
+A config file named `package.json` must be present in the project folder. In order
+to have rsync work you at least need to fill out the `profile` settings in the
+nimrod config and have an enviroment variable defined with the same name then in
+your sync profile.
 
 ### Example
 ```json
 {
-    "resource": {
-        "name": "jetstream",
-        "version": "1.0.0",
-        "description": "Blackout Technologies Utility Library, Python2 and Python3 compatible",
-        "resourceName": "jetstream",
-        "target": "development/Libs/jetstream"
-    },
-    "system": {
-        "version": "0.1.4"
+    "sync": {
+        "mf": [
+            "Server",
+            "Pepper",
+            "Nao",
+            "Romeeo"
+        ]
     }
 }
 ```

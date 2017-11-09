@@ -79,12 +79,13 @@ module.exports = Nimrod =
 
             for serverKey of data.sync[profileName]
                 server = data.sync[profileName][serverKey]
+                serverLocation = process.env[server]
 
-                if server != undefined
+                if serverLocation != undefined
                     # spawn rsync process
-                    console.log "Sync: "+dir+" -> "+server.location+':.'+target+'/'
+                    console.log "Sync: "+dir+" -> "+serverLocation+':.'+target+'/'
                     sync = spawn 'rsync', ['-r', '--exclude', '.git', dir+'/',
-                        server.location+':.'+target+'/']
+                        serverLocation+':.'+target+'/']
 
                     sync.stderr.on 'data', (data) ->
                         console.error(data.toString().trim())
