@@ -1,14 +1,21 @@
 {
   "name": "nimrod",
   "main": "./lib/nimrod",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Sync files to remote location and remote build on project basis.",
   "license": "MIT",
   "module": "misc",
   "sync": {
     "mf": [
-      {"name": "Hydrax", "options": {"ignoreNamespace": true}},
-      {"name": "Benny"}
+      {
+        "name": "Hydrax",
+        "options": {
+          "ignoreNamespace": true
+        }
+      },
+      {
+        "name": "Benny"
+      }
     ]
   },
   "engines": {
