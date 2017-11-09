@@ -63,15 +63,6 @@ module.exports = Nimrod =
         packageNameTmp = data.name.split('/')
         packageName = packageNameTmp[packageNameTmp.length - 1]
 
-        target = ""
-        if userNamespace != undefined
-            target = target+'/'+userNamespace
-
-        if data.module != undefined
-            target = target+'/'+data.module
-
-        target = target+'/'+packageName
-
         console.dir data.sync[profileName]
         if data.sync != undefined and data.sync[profileName] != undefined
             if notifications is true
@@ -79,7 +70,20 @@ module.exports = Nimrod =
 
             for serverKey of data.sync[profileName]
                 server = data.sync[profileName][serverKey]
-                serverLocation = process.env[server]
+                serverLocation = process.env[server.name]
+
+                target = ""
+                if userNamespace != undefined
+                    target = target+'/'+userNamespace
+
+                if data.module != undefined
+                    target = target+'/'+data.module
+
+                target = target+'/'+packageName
+
+                if server.options != undefined
+                    if server.options.ignoreNamespace is true
+                        target = target.replace('/'+userNamespace, '')
 
                 if serverLocation != undefined
                     # spawn rsync process

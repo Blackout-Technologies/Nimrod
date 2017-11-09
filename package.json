@@ -7,8 +7,8 @@
   "module": "misc",
   "sync": {
     "mf": [
-      "Hydrax",
-      "Benny"
+      {"name": "Hydrax", "options": {"ignoreNamespace": true}},
+      {"name": "Benny"}
     ]
   },
   "engines": {
